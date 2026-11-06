@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "felas"
+version = "0.1.0"
+description = "A 2-D linear-elasticity finite element solver with Zienkiewicz-Zhu error estimation and adaptive mesh refinement."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [{ name = "Vikrant Chauhan" }]
+keywords = ["finite-element", "FEM", "elasticity", "adaptive-mesh-refinement",
+            "numerical-methods", "computational-mechanics"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Scientific/Engineering",
+    "Intended Audience :: Science/Research",
+]
+dependencies = ["numpy>=1.23", "scipy>=1.9"]
+
+[project.optional-dependencies]
+plot = ["matplotlib>=3.6"]
+dev = ["pytest>=7.0", "matplotlib>=3.6"]
+
+[project.urls]
+Homepage = "https://github.com/vikranthacker/fem2d-elasticity"
+Repository = "https://github.com/vikranthacker/fem2d-elasticity"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
