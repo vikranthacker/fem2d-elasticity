@@ -9,7 +9,7 @@ error estimation, and adaptive (longest-edge bisection) mesh refinement that
 concentrates elements where the solution error is largest.
 
 The library is deliberately compact and documented so it can be read as a
-reference implementation, while being verified against closed-form benchmark
+reference implementation, while being validated against closed-form benchmark
 solutions (patch test, Timoshenko cantilever, Kirsch plate-with-hole).
 
 ---
@@ -22,12 +22,13 @@ solutions (patch test, Timoshenko cantilever, Kirsch plate-with-hole).
   Dirichlet, Neumann (edge traction), point-load and body-force boundary
   conditions.
 - **Recovery-based (Zienkiewicz–Zhu) a-posteriori error estimation** in the
-  energy norm.
+  energy norm — a *heuristic* indicator, not a guaranteed bound (see
+  [Limitations](#limitations)).
 - **Adaptive mesh refinement** via conforming Rivara *longest-edge bisection*
   with Dörfler (bulk) marking — no hanging nodes.
 - **Benchmark mesh generators**: rectangle, L-shape, and a quarter plate with a
   circular hole.
-- **Verified** against analytical solutions and classic convergence rates, with
+- **Validated** against analytical solutions and classic convergence rates, with
   a full `pytest` suite.
 
 ---
@@ -186,6 +187,33 @@ convergence rates, and that adaptivity reduces the error and beats uniform
 refinement.
 
 ---
+
+## Limitations
+
+This is a compact reference implementation, not a verified-computing library. Its
+scope and honest caveats:
+
+- **The ZZ error estimate is a heuristic, not a guaranteed bound.** It provides
+  *no* proven upper or lower bound on the true error and no controlled
+  effectivity index. Recovery-based estimators are asymptotically exact only for
+  *smooth* solutions on sufficiently regular meshes; near the L-shape's
+  re-entrant corner (a singularity) and along domain boundaries (where recovery
+  patches are one-sided) the indicator is a proxy of unquantified fidelity. The
+  "adaptive vs uniform" comparison plots the *estimated* error η, not a certified
+  one. For rigorous, guaranteed error bounds see the computer-assisted /
+  verified-FEM literature (e.g. Liu & Oishi; Kikuchi & Liu on interpolation
+  error constants).
+- **Stress recovery uses simple area-weighted nodal averaging**, not
+  superconvergent patch recovery (SPR). SPR would materially improve the
+  estimator's effectivity and is a natural next step.
+- **Reported stress-concentration peaks** (e.g. the plate-with-hole example) are
+  read from recovered nodal values at a boundary node, which carries a recovery
+  bias; treat them as validated-to-engineering-accuracy, not exact.
+- **Edge tractions** use the 2-node linear consistent load, which is exact only
+  for tractions varying linearly along an edge; a quadratic traction (e.g. the
+  cantilever end shear) incurs a harmless O(h²) consistency error.
+- Only linear (P1 / CST) triangles are implemented; no higher-order elements,
+  contact, nonlinearity, or dynamics.
 
 ## References
 

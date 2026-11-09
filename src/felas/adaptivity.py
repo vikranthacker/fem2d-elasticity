@@ -92,7 +92,8 @@ def adaptive_solve(initial_mesh: Mesh,
         history.append(step)
         if verbose:
             print(f"[{i:2d}] dofs={step.n_dofs:6d}  "
-                  f"eta={step.global_error:.4e}  rel={step.relative_error:.4%}")
+                  f"eta={step.global_error:.4e}  "
+                  f"est.rel.err(ZZ)={step.relative_error:.4%}")
 
         if i == steps - 1:
             break

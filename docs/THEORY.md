@@ -95,6 +95,20 @@ evaluated here with a 3-point (edge-midpoint) quadrature that is exact for the
 quadratic integrand. The global estimate is $\eta = \big(\sum_K \eta_K^2\big)^{1/2}$,
 and the relative error is $\eta / \big(\lVert\boldsymbol{\sigma}^*\rVert_E^2 + \eta^2\big)^{1/2}$.
 
+> **This is a heuristic estimator, not a guaranteed bound.** The ZZ indicator
+> gives *no* proven upper or lower bound on the true error $\lVert \boldsymbol{\sigma} - \boldsymbol{\sigma}_h \rVert_E$
+> and no controlled effectivity index $\eta / \lVert \boldsymbol{\sigma} - \boldsymbol{\sigma}_h \rVert_E$.
+> It is asymptotically exact only for *smooth* solutions on regular meshes,
+> because it relies on the recovered field $\boldsymbol{\sigma}^*$ being a
+> superconvergent approximation of $\boldsymbol{\sigma}$. At a singularity (the
+> L-shape's re-entrant corner) or on the boundary (one-sided recovery patches)
+> this assumption fails and $\eta$ becomes a proxy of unquantified fidelity. It
+> is an excellent *refinement driver* — which elements to split — but should not
+> be read as a certified error. Simple nodal averaging is used here; a
+> superconvergent patch recovery (SPR) would improve the effectivity. For
+> *guaranteed* a-posteriori bounds, see the verified-FEM literature on
+> interpolation error constants and computer-assisted proofs.
+
 ## 6. Adaptive refinement
 
 Each adaptive step performs **solve → estimate → mark → refine**:

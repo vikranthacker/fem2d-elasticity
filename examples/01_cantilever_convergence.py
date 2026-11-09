@@ -71,31 +71,46 @@ def main() -> None:
         h = sol.L / nx
         l2 = l2_displacement_error(mesh, u, sol)
         energy = prob.strain_energy(u)
-        en_err = abs(energy - exact_energy) / exact_energy
+        # Energy-norm relative error via Galerkin orthogonality:
+        #   ||u - u_h||_E / ||u||_E = sqrt( (U_exact - U_h) / U_exact ).
+        en_err = np.sqrt(max(exact_energy - energy, 0.0) / exact_energy)
         rows.append((mesh.n_dofs, h, tip_fem, l2, en_err))
 
-    print(f"exact tip deflection u(L,0) = {float(tip_exact):.6f}")
-    print(f"{'dofs':>7} {'h':>8} {'tip_fem':>12} {'L2_err':>12} {'energy_err':>12}")
+    print(f"exact tip deflection  v(L,0) = {float(tip_exact):.6f}")
+    print(f"exact strain energy       U  = {exact_energy:.6f}")
+    print(f"{'dofs':>7} {'h':>8} {'tip_fem':>12} {'L2_err':>12} {'enorm_err':>12}")
     for dofs, h, tip, l2, en in rows:
         print(f"{dofs:7d} {h:8.4f} {tip:12.6f} {l2:12.4e} {en:12.4e}")
 
-    rates = _rates([r[1] for r in rows], [r[3] for r in rows])
-    print(f"\nobserved L2 convergence rate ~ {np.mean(rates):.2f} (expected ~2.0)")
+    l2_rates = _rates([r[1] for r in rows], [r[3] for r in rows])
+    en_rates = _rates([r[1] for r in rows], [r[4] for r in rows])
+    print(f"\nobserved L2 convergence rate         ~ {np.mean(l2_rates):.2f} "
+          f"(expected ~2.0)")
+    print(f"observed energy-norm convergence rate ~ {np.mean(en_rates):.2f} "
+          f"(expected ~1.0)")
 
     _plot(rows, FIGDIR)
 
 
 def _exact_energy(sol, mat: Material) -> float:
-    """Exact strain energy via fine Gauss integration of the analytic stress."""
+    """Exact strain energy by tensor-product Gauss-Legendre integration.
+
+    The Timoshenko stress field is polynomial (degree <= 2 in x and <= 4 in y),
+    so an 8x8 Gauss rule integrates ``sigma^T C^{-1} sigma`` *exactly* -- unlike a
+    product-rectangle rule, which is only first order and would be less accurate
+    than the FEM solution it is meant to validate.
+    """
     C = mat.compliance_matrix()
-    n = 200
-    xs = np.linspace(0, sol.L, n)
-    ys = np.linspace(-sol.c, sol.c, n)
-    gx, gy = np.meshgrid(xs, ys)
-    s = sol.stress(gx.ravel(), gy.ravel())
+    xg, wg = np.polynomial.legendre.leggauss(8)
+    xs = 0.5 * sol.L * (xg + 1.0)      # map [-1, 1] -> [0, L]
+    wx = 0.5 * sol.L * wg
+    ys = sol.c * xg                    # map [-1, 1] -> [-c, c]
+    wy = sol.c * wg
+    X, Y = np.meshgrid(xs, ys, indexing="ij")
+    W = np.outer(wx, wy).ravel()
+    s = sol.stress(X.ravel(), Y.ravel())
     dens = np.einsum("ij,jk,ik->i", s, C, s)
-    area_cell = (sol.L / (n - 1)) * (2 * sol.c / (n - 1))
-    return 0.5 * mat.thickness * dens.sum() * area_cell
+    return 0.5 * mat.thickness * float(np.sum(W * dens))
 
 
 def _rates(h, err):
@@ -115,7 +130,7 @@ def _plot(rows, figdir: str) -> None:
     en = np.array([r[4] for r in rows])
     fig, ax = plt.subplots(figsize=(6, 5))
     ax.loglog(h, l2, "o-", label="L2 displacement error")
-    ax.loglog(h, en, "s-", label="relative energy error")
+    ax.loglog(h, en, "s-", label="energy-norm error")
     ax.loglog(h, l2[0] * (h / h[0]) ** 2, "k--", lw=1, label="slope 2")
     ax.loglog(h, en[0] * (h / h[0]) ** 1, "k:", lw=1, label="slope 1")
     ax.set_xlabel("element size h")
