@@ -112,6 +112,23 @@ Exact tip deflection `v(L, 0) = −0.0375`; observed L2 convergence rate ≈ **1
 
 ![Cantilever convergence](examples/figures/cantilever_convergence.png)
 
+#### A bug I caught (and why it matters)
+
+The first version of this convergence study had the FEM displacement error dropping
+at the expected `O(h²)`, but the strain-**energy** error stubbornly plateaued near
+2% — inconsistent with the clean displacement convergence. Rather than accept it, I
+checked each number independently. The FEM strain energy was fine: it converged
+monotonically from below at `O(h²)` toward the analytic value. The culprit was my
+*reference*: the "exact" energy was being computed with a first-order
+product-rectangle rule (~2% error), so the quantity I was validating *against* was
+less accurate than the solution I was validating. Because the Timoshenko stress
+field is polynomial, an exact tensor-product **Gauss–Legendre** rule gives the true
+energy; switching to it (and reporting the energy-norm error via Galerkin
+orthogonality, `‖u−u_h‖_E/‖u‖_E = √((U_exact−U_h)/U_exact)`) made the correct
+`O(h)` energy-norm rate appear. The lesson I took from it: in a convergence study,
+distrust your own reference the moment the "exact" value is the least accurate
+number in the table.
+
 ### 2. Plate with a circular hole — stress concentration
 
 Quarter model under remote uniaxial tension with symmetry boundary conditions.
