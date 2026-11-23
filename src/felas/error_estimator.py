@@ -39,7 +39,8 @@ _MID_W = 1.0 / 3.0
 
 
 def zz_error_estimate(mesh: Mesh, element_stress: np.ndarray,
-                      compliance: np.ndarray, thickness: float = 1.0
+                      compliance: np.ndarray, thickness: float = 1.0,
+                      nodal_stress: np.ndarray | None = None
                       ) -> ErrorEstimate:
     """Compute the ZZ error estimate.
 
@@ -51,9 +52,16 @@ def zz_error_estimate(mesh: Mesh, element_stress: np.ndarray,
     compliance : (3, 3) array
         Inverse constitutive matrix ``C^{-1}`` (``Material.compliance_matrix``).
     thickness : float
+    nodal_stress : (n_nodes, 3) array, optional
+        A pre-recovered continuous nodal stress field to use as ``sigma*``.  When
+        omitted, plain area-weighted nodal averaging
+        (:func:`recovery.recover_nodal_stress`) is used.  Pass the output of
+        :func:`recovery.recover_nodal_stress_spr` to drive the estimator with
+        Superconvergent Patch Recovery instead.
     """
     element_stress = np.asarray(element_stress)
-    nodal = recover_nodal_stress(mesh, element_stress)
+    nodal = (recover_nodal_stress(mesh, element_stress)
+             if nodal_stress is None else np.asarray(nodal_stress, dtype=float))
     areas = mesh.areas()
 
     n_el = mesh.n_elements

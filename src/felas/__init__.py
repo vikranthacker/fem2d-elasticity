@@ -20,7 +20,7 @@ Typical use::
 from .materials import Material
 from .mesh import Mesh
 from .fem import ElasticityProblem
-from .recovery import recover_nodal_stress, von_mises
+from .recovery import recover_nodal_stress, recover_nodal_stress_spr, von_mises
 from .error_estimator import zz_error_estimate
 from .adaptivity import adaptive_solve, dorfler_marking
 
@@ -29,6 +29,7 @@ __all__ = [
     "Mesh",
     "ElasticityProblem",
     "recover_nodal_stress",
+    "recover_nodal_stress_spr",
     "von_mises",
     "zz_error_estimate",
     "adaptive_solve",
